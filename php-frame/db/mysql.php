@@ -4,10 +4,9 @@
  * MySQL database layer.
  *
  * @started: July 11, 2005
- * @copyright: Copyright (c) 2005-2008, Cortex Creations, All Rights Reserved
- * @website: www.cortex-creations.com
- * @license: see COPYING
- * @subversion: $Id: mysql.php 119 2008-09-11 20:14:08Z josh $
+ * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
+ * @website: www.joshisgross.com/projects/php-frame
+ * @license: see MIT-LICENSE
  */
 
 // Security
