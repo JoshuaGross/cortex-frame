@@ -1,0 +1,27 @@
+<html>
+	<head>
+		<title>PHP-Frame Template</title>
+	</head>
+	<body>
+		<h1>PHP-Frame Template</h1>
+		<h2>Goals</h2>
+		<ul>
+			<li>HTML markup, like PHP code, should not be duplicated. INCLUDE directives should allow for modular templates (irrelevant with WYSIWYG packages like Dreamweaver).</li>
+			<li>The template engine needs to be able to play nice with WYSIWYGs like Dreamweaver.</li>
+			<li>The framework should make it easy to transfer data between PHP and the template engine. phpBB and other template engines require too much pointless re-structuring of data.</li>
+			<li>No PHP code in the template. Nothing resembling it. Period.</li>
+			<li>Template markup HTML can only access variables sent to the engine.</li>
+			<li>Template markup can loop through arrays, with unlimited nesting. </li>
+			<li>Lightweight.</li>
+			<li>Simplicity.</li>
+		</ul>
+
+		<h2>Suggested practices</h2>
+		<ul>
+			<li>Consistent variable naming schemes. Everything is lower-case. Prefix all URLs with "u_", images with "u_img_", thumbnails with "u_thumb".</li>
+			<li>Turn on server-side Template caching for any large project.</li>
+			<li>Use $template->set_var_safe instead of $template->set_var when possible. set_var_safe runs htmlspecialchars on the input.</li>
+			<li>If Dreamweaver or another WYSIWYG tool is being used, place template HTML files in the document root, named tpl_xxxx.html. That way, relative URL paths can be used.</li>
+		</ul>
+	</body>
+</html>

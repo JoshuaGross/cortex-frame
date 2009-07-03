@@ -1,0 +1,7 @@
+* Finish test cases
+* Automatically rebuild URLs - preprocessed code
+* Template: Compress output code
+* DB: automatically built SELECT, UPDATE, and INSERT queries from arrays
+* build_url: detect https
+* build_url: integrate with mod_rewrite, unify all calls, etc
+* Marc: unify consistent exposure of all of the variables
