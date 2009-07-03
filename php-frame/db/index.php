@@ -1,0 +1,1 @@
+<?php define('IN_PHPFRAME',1); require('../functions.php'); redirect('../../'); ?>
