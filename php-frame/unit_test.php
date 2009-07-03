@@ -3,10 +3,9 @@
  * PHP-Frame - PHP unit testing framework.
  *
  * @started: Thursday, December 22, 2005
- * @copyright: Copyright (c) 2005-2006, Cortex Creations, All Rights Reserved
- * @website: www.cortex-creations.com
- * @license: see COPYING
- * @subversion: $Id: unit_test.php 65 2006-10-19 23:39:46Z jd $
+ * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
+ * @website: www.joshisgross.com/projects/php-frame
+ * @license: see MIT-LICENSE
  */
 
 /**

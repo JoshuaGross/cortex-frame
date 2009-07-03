@@ -4,10 +4,9 @@
  * Security file. Does a few operations to ensure the script is safe.
  *
  * @started: 07/11/2005
- * @copyright: Copyright (c) 2005-2007, Cortex Creations, LLC All Rights Reserved
- * @website: www.jportalhome.com
- * @license: GPL
- * @subversion: $Id: security.php 116 2007-11-08 15:07:06Z jd $
+ * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
+ * @website: www.joshisgross.com/projects/php-frame
+ * @license: see MIT-LICENSE
  */
  
 // Basic security

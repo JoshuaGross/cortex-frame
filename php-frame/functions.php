@@ -4,8 +4,9 @@
  * Common functions file.
  *
  * @started: July 11, 2005
- * @copyright: Copyright (c) 2005-2008, Cortex Creations, LLC, All Rights Reserved
- * @subversion: $Id: functions.php 117 2008-03-05 16:49:47Z jd $
+ * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
+ * @website: www.joshisgross.com/projects/php-frame
+ * @license: see MIT-LICENSE
  */
 
 // Security

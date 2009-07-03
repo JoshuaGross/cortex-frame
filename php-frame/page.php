@@ -3,10 +3,9 @@
  * PHP-Frame: class for pages to extend
  * 
  * @started: Wednesday, January 18, 2005
- * @copyright: Copyright (c) 2005-2006, Cortex Creations, All Rights Reserved
- * @website: www.cortex-creations.com
- * @license: see COPYING
- * @subversion: $Id: page.php 63 2006-10-17 22:03:16Z jd $
+ * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
+ * @website: www.joshisgross.com/projects/php-frame
+ * @license: see MIT-LICENSE
  */
 class PHP_Frame_page extends PHP_unit_tests
 {

@@ -3,8 +3,9 @@
  * PHP-Frame - select-list related functions
  *
  * @begin: Saturday, December 3, 2005
- * @copyright: 2006, Cortex Creations, All Rights Reserved
- * @subversion: $Id: selects.php 81 2006-11-03 20:40:27Z jd $
+ * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
+ * @website: www.joshisgross.com/projects/php-frame
+ * @license: see MIT-LICENSE
  */
 
 // Security

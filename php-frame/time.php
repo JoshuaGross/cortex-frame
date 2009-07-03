@@ -4,8 +4,9 @@
  * 
  * @started: (DBS) Wednesday, March 15, 2006
  * @started: (PHP-Frame) Monday, December 4, 2006
- * @copyright: Copyright (c) 2006 Cortex Creations, All Rights Reserved
- * @subversion: $Id: time.php 114 2007-04-11 01:10:51Z josh $
+ * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
+ * @website: www.joshisgross.com/projects/php-frame
+ * @license: see MIT-LICENSE
  */
 
 // Security

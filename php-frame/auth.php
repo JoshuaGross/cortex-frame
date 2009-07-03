@@ -15,10 +15,9 @@
  *    will be passed via the URL.
  *
  * @started: 07/15/2005
- * @copyright: Copyright (c) 2005, JPortal, All Rights Reserved
- * @website: www.jportalhome.com
- * @license: GPL
- * @subversion: $Id: auth.php 120 2008-10-10 00:49:09Z josh $
+ * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
+ * @website: www.joshisgross.com/projects/php-frame
+ * @license: see MIT-LICENSE
  */
  
 // Security
