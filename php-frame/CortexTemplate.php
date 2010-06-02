@@ -12,12 +12,6 @@
  * @since		Version 1.0
  */
 
-// Security
-if (!defined('IN_PHPFRAME'))
-{
-	exit;
-}
-
 // Simple template engine for php-frame and CodeIgniter
 class CortexTemplate
 {
