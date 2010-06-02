@@ -4,6 +4,15 @@
  * Templating engine.
  * The syntax for the template engine parse was inspired by phpBB3.
  *
+ * Usage:
+ * Starting to use the CortexTemplate is as simple as doing this in your
+ * controller:
+ * $this->load->library('CortexTemplate');
+ * $this->cortextemplate->output('index');
+ *
+ * This will output tpl_index.html from your root directory.
+ * Check joshisgross.com for more documentation... soon!
+ *
  * @package		CodeIgniter
  * @started: 07/11/2005
  * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
