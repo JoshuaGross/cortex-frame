@@ -497,6 +497,22 @@ class CortexTemplate
 
 						$compiled_blocks[] = "<?php } $extra_framework_code ?>";
 						break;						
+
+					case 'DEFINE':
+						// get an arbitrary tag ID so that this tag can be redefined later
+						$tag_name = $directive_blocks[2][$i];
+						$tag_id = preg_replace('#[^a-zA-Z]#si', '', $tag_name) . '_' . (isset($this->tags[$tag_name]) ? preg_replace('#^tpl_tag_'.preg_quote($tag_name).'_([0-9]+)$#si', '$1', $this->tags[$tag_name]) + 1 : 1);
+						$compiled_blocks[] = "<?php \$tag_block = '$tag_name'; \$".$tpl_reference."->tags['$tag_name'] = 'tpl_tag_$tag_id'; function tpl_tag_$tag_id (&\$tpl_in) { \$tpl_in->set_var('tag_id', (!empty(\$tpl_in->tpl_vars['tag_name']) ? \$tpl_in->tpl_vars['tag_name'] : $tag_id).'_'.(isset(\$tpl_in->tpl_vars['tag_value']) && \$tpl_in->tpl_vars['tag_value'] != '' ? \$tpl_in->tpl_vars['tag_value'] : rand())); ?>";
+						$this->tags[$tag_name] = "tpl_tag_$tag_id";
+
+						$this->compiler_inside_define++;
+
+						break;
+
+					case 'ENDDEFINE':
+						$compiled_blocks[] = "<?php } ?>";
+						$this->compiler_inside_define--;
+						break;
 						
 					// Unknown directive; probably just an HTML comment
 					default:
@@ -737,6 +753,7 @@ class CortexTemplate
 		
 		// Change variable references in original condition to PHP equivalents
 		$tpl_reference = ($this->compiler_inside_define ? 'tpl_in' : 'this');
+		$conditions = $this->parse_tpl_variables($conditions, true, true, $tpl_reference);
 		
 		return $conditions;
 	}
