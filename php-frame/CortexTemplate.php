@@ -415,7 +415,7 @@ class CortexTemplate
 							// Bails out at this point if strict mode is on
 							if ($this->strict_include_mode)
 							{
-								eval((function_exists('show_error' ? 'show_error' : 'die').'(\'Failed at including template: \' . $include_file)');
+								eval((function_exists('show_error') ? 'show_error' : 'die').'(\'Failed at including template: \' . $include_file)');
 								exit;
 							}
 						}
