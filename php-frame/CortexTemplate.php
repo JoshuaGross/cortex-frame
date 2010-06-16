@@ -13,7 +13,7 @@
  * This will output tpl_index.html from your root directory.
  * Check joshisgross.com for more documentation... soon!
  *
- * @package		CodeIgniter
+ * @package		CodeIgniter 
  * @started: 07/11/2005
  * @copyright: Copyright (c) 2005-2009 Cortex Creations, LLC, All Rights Reserved
  * @website: www.joshisgross.com/projects/php-frame
