@@ -415,12 +415,11 @@ class CortexTemplate
 						// inside this loop.
 						$this->loops[$looping_var] = $looping_array_path . "[$i_var]";
 
-						// Extra error checking for CodeIgniter
-						$extra_framework_code = '';
-						if (function_exists('show_error'))
-						{
-							$extra_framework_code = "if (!isset(\$this->tpl_vars$looping_array_path)) { show_error('Tried to LOOP over undefined variable in the template: $looping_var'); } else {";
-						}
+						// Extra error checking: this can be removed to reduce
+						// generated code. Added to make debugging templates much easier.
+						// show_error is for CodeIgniter.
+						$error_function = function_exists('show_error') ? 'show_error' : 'print';
+						$extra_framework_code = "if (!isset(\$this->tpl_vars$looping_array_path)) { $error_function('Tried to LOOP over undefined variable in the template: $looping_var'); } else {";
 												
 						// This is the start of the loop
 						$compiled_blocks[] =
@@ -428,18 +427,16 @@ class CortexTemplate
 								. $extra_framework_code
 								. "$i_var_count = 1; foreach (\$this->tpl_vars$looping_array_path as $i_var => \$useless)"
 								. "{"
+									/* if statement in case there's bad data in an array */
+									. "if (is_array(\$this->tpl_vars$looping_array_path"."[$i_var])) {"
 									. "\$this->tpl_vars$looping_array_path"."[$i_var]['row'] = $i_var_count; ++$i_var_count;"
 									. "?>";
 						break;
 
 					case 'ENDLOOP':
 
-						// Extra error checking for CodeIgniter
-						$extra_framework_code = '';
-						if (function_exists('show_error'))
-						{
-							$extra_framework_code = " } ";
-						}
+						// Extra error checking
+						$extra_framework_code = '}}';
 
 						$compiled_blocks[] = "<?php } $extra_framework_code ?>";
 						break;						
