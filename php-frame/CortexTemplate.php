@@ -382,6 +382,8 @@ class CortexTemplate
 		$num_plaintext_blocks = count($plaintext_blocks);
 		for ($i = 0; $i < $num_plaintext_blocks; $i++)
 		{
+			$tpl_reference = ($this->compiler_inside_define ? 'tpl_in' : 'this');
+			
 			// Add parsed plaintext block to compiled blocks array
 			$text_block = array_shift($plaintext_blocks);
 			if (strpos($text_block,	'{') !== false)
