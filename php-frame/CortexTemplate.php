@@ -24,6 +24,24 @@
 // Simple template engine for php-frame and CodeIgniter
 class CortexTemplate
 {
+	/* BEGIN CONFIG */
+
+	/**
+	 * This is a temporarily unsafe feature; turn it off if you are going
+	 *   to accept template code from end-users. 
+	 * It allows, inside an INCLUDE directive, references "../" to the parent
+	 *   directory.
+	 */
+	var $allow_include_backdir = true;
+
+	/**
+	 * If a file cannot be found within an INCLUDE directive, execution of the
+	 * template will immediately end and an error message will be shown.
+	 */
+	var $strict_include_mode = true;
+
+	/* END CONFIG */
+
 	/**
 	 * Template file names; handle -> filename
 	 */
@@ -46,6 +64,18 @@ class CortexTemplate
 	var $tpl_vars = array();
 	
 	/**
+	 * Use this feature sparingly: array of custom tags
+	 * TODO: document and clean up this feature
+	 */
+	var $tags = array();
+
+	/**
+	 * this is used by the compiler to count number of
+	 *  DEFINE nesting blocks.
+	 */
+	var $compiler_inside_define = 0;
+	
+	/**
 	 * This is an array containing information about open LOOPs. It is used
 	 * during template compilation.
 	 */
@@ -63,6 +93,7 @@ class CortexTemplate
 
 	/**
 	 * URLs to be replaced in the HTML on-the-fly
+	 * TODO: document and clean up this feature
 	 */
 	var $registered_urls = array();
 	
@@ -114,7 +145,18 @@ class CortexTemplate
 			return true;
 		}
 
-		$file_name = $this->root_tpl_prefix . $file_name;
+		// Do we have ../ or other paths at the beginning?
+		// TODO: allow sandboxing of some sort
+		// Added 6/8/2010
+		if ($this->allow_include_backdir && preg_match('#^(([^/]+/)+)([^/]+)$#si', $file_name, $match))
+		{
+			preg_match('#^(([^/]+/)+)([^/]*)$#si', $this->root_tpl_prefix, $rootmatch);
+			$file_name = $rootmatch[1] . $match[1] . $rootmatch[3] . $match[3];
+		}
+		else
+		{
+			$file_name = $this->root_tpl_prefix . $file_name;
+		}
 
 		if (file_exists($file_name))
 		{
@@ -299,9 +341,10 @@ class CortexTemplate
 		}
 				
 		// Remove all PHP from code
-		$code = preg_replace('#\<\?(php)?(.*?)\?\>#si', '', $code);
-		$code = preg_replace('#\<\%(.*?)\%\>#si', '', $code);
-		$code = preg_replace('#\<script[^>]*php[^>]*\>.*?\</script\>#si', '', $code);
+		// Warnings added 6/8/2010
+		$code = preg_replace('#\<\?(php)?(.*?)\?\>#si', '<!-- Template warning: PHP code removed -->', $code);
+		$code = preg_replace('#\<\%(.*?)\%\>#si', '<!-- Template warning: PHP code removed -->', $code);
+		$code = preg_replace('#\<script[^>]*php[^>]*\>.*?\</script\>#si', '<!-- Template warning: PHP code removed -->', $code);
 
 		// Remove whitespace? (extraneous newlines/tabs)
 		if ($strip_whitespace)
@@ -324,9 +367,15 @@ class CortexTemplate
 		}
 
 		// Find possible directives and split code into plaintext blocks
+		// New regex 6/8/2010: nested variables: {u_var_{username}_thing}
 		$directive_blocks = array();
-		preg_match_all('#<!-- ([a-zA-Z]+) ([a-zA-Z0-9\'"\.\_ /]+[^ ])?[ ]?-->#s', $code, $directive_blocks);
-		$plaintext_blocks = preg_split('#<!-- ([a-zA-Z]+) ([a-zA-Z0-9\'"\.\_ /]+[^ ])?[ ]?-->#s', $code);
+		$directive_regex = '#<!-- ([a-zA-Z]+) (([a-zA-Z0-9\'"\.\_ /]|\{[a-zA-Z0-9\'"\.\_ /]+\})+[^ ])?[ ]?-->#s';
+		preg_match_all($directive_regex, $code, $directive_blocks);
+		$plaintext_blocks = preg_split($directive_regex, $code);
+		// Old matching code (before 6/8/2010)
+		// Did not allow nested variable matching
+		//preg_match_all('#<!-- ([a-zA-Z]+) ([a-zA-Z0-9\'"\.\_ /]+[^ ])?[ ]?-->#s', $code, $directive_blocks);
+		//$plaintext_blocks = preg_split('#<!-- ([a-zA-Z]+) ([a-zA-Z0-9\'"\.\_ /]+[^ ])?[ ]?-->#s', $code);
 		
 		// Parse through blocks
 		$compiled_blocks = array();
@@ -337,7 +386,7 @@ class CortexTemplate
 			$text_block = array_shift($plaintext_blocks);
 			if (strpos($text_block,	'{') !== false)
 			{
-				$text_block = $this->parse_tpl_variables($text_block);
+				$text_block = $this->parse_tpl_variables($text_block, false, false, $tpl_reference);
 			}
 			$compiled_blocks[] = &$text_block;
 			unset($text_block);
@@ -354,15 +403,21 @@ class CortexTemplate
 						if (isset($this->template_files[$include_file]))
 						{
 							/* $replacement = '<?php $this->output("'.$this->template_files[$include_file].'"); ?>'."\n"; */
-							$replacement = '<?php $this->output($this->template_files["'.$include_file.'"], false, '.($strip_whitespace ? 'true' : 'false').'); ?>'."\n";
+							$replacement = '<?php $'.$tpl_reference.'->output($'.$tpl_reference.'->template_files["'.$include_file.'"], false, '.($strip_whitespace ? 'true' : 'false').'); ?>'."\n";
 						}
 						else if ($this->template_exists($include_file))
 						{
-							$replacement = '<?php $this->set_file("'.$include_file.'","'.$include_file.'"); $this->output("'.$include_file.'", false, '.($strip_whitespace ? 'true' : 'false').'); ?>'."\n";
+							$replacement = '<?php $'.$tpl_reference.'->set_file("'.$include_file.'","'.$include_file.'"); $'.$tpl_reference.'->output("'.$include_file.'", false, '.($strip_whitespace ? 'true' : 'false').'); ?>'."\n";
 						}
 						else
 						{
 							$replacement = '<!-- ERROR; ' . $include_file . ' does not exist! -->';
+							// Bails out at this point if strict mode is on
+							if ($this->strict_include_mode)
+							{
+								eval((function_exists('show_error' ? 'show_error' : 'die').'(\'Failed at including template: \' . $include_file)');
+								exit;
+							}
 						}
 						$compiled_blocks[] = $replacement;
 						break;
@@ -449,8 +504,47 @@ class CortexTemplate
 			}
 		}
 
-		// Join array of compiled blocks and return result
-		return join('', $compiled_blocks);
+		$tpl_reference = ($this->compiler_inside_define ? 'tpl_in' : 'this');
+
+		// Join array of compiled blocks
+		$compilation_result = join('', $compiled_blocks);
+
+		// We now have compiled code EXCEPT for custom tags...
+		// Regex from: http://kevin.deldycke.com/2007/03/ultimate-regular-expression-for-html-tag-parsing-with-php/
+		//$html_regex = "/<\/?\w+((\s+(\w|\w[\w-]*\w)(\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?".">/i";
+		$tag_html_regex = "/<tpl\:(\w+)((\s+(\w|\w[\w-]*\w)(\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?".">/i";
+		preg_match_all($tag_html_regex, $compilation_result, $matches);
+		foreach ($matches[0] as $k=>$v)
+		{
+			// matches[0]: whole tag
+			// matches[1]: tag name
+			// matches[2]: parameters
+			$tag_name = $matches[1][$k];
+
+			// Construct parameter code
+			$param_regex = "/(\s|^)*(\w|\w[\w-]*\w)(\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))"."/i";
+			preg_match_all($param_regex, $matches[2][$k], $matches_params);
+			$param_code_begin = '';
+			$param_code_end = '';
+			foreach ($matches_params[0] as $j=>$w)
+			{
+				// index 2: param name
+				// index 3: param value
+				$param_name = '\$'.$tpl_reference.'->tpl_vars[\'tag_'.$matches_params[2][$j].'\']';
+				$param_code_begin .= $param_name.$matches_params[3][$j].';';
+				$param_code_end .= 'unset('.$param_name.');';
+			}
+
+			$error_function = function_exists('show_error') ? 'show_error' : 'print';
+			$error_function = 'print';
+			$compilation_result = preg_replace('#'.preg_quote($matches[0][$k]).'#', "<"."?php if (isset(\$".$tpl_reference."->tags['$tag_name'])) { if (function_exists(\$".$tpl_reference."->tags['$tag_name'])) { $param_code_begin call_user_func(\$".$tpl_reference."->tags['$tag_name'], \$$tpl_reference); $param_code_end } else { $error_function('Internal template error: tpl:$tag_name does not have a valid callback function, should be '.\$".$tpl_reference."->tags['$tag_name']); } } else { $error_function('$tag_name is not a valid custom template tag.'); } ?".">", $compilation_result);
+		}
+
+		//print htmlspecialchars($compilation_result);
+		//$exp = explode("\n", $compilation_result);
+		//print 'CODE : '.$exp[1]."\n<br />";
+
+		return $compilation_result;
 	}
 
 	/**
@@ -522,41 +616,77 @@ class CortexTemplate
 	/**
 	 * Parse template variables in content.
 	 */
-	function parse_tpl_variables ($content, $inline = false)
+	function parse_tpl_variables ($content, $in_inline = false, $out_inline = false, $tpl_reference = 'this')
 	{
 		// Depending on whether this code will be inserted into PHP or HTML,
 		// parts of the regex and output will be different.
-		if ($inline)
+		if ($in_inline)
 		{
-			$regex_before = '([^a-zA-Z0-9]|^)';
-			$regex_after = '([^a-zA-Z0-9]|$)';
-			$php_before = '';
-			$php_after = '';
+			$regex_before = '([^_a-zA-Z0-9]|^)';
+			$regex_after = '([^_a-zA-Z0-9]|$)';
 		}
 		else
 		{
 			$regex_before = '(\{)';
 			$regex_after = '(\})';
+		}
+		if ($out_inline)
+		{
+			$php_before = (!$in_inline ? '\'.' : '');
+			$php_after = (!$in_inline ? '.\'' : '');
+		}
+		else
+		{
 			$php_before = '<?php print(';
 			$php_after = '); ?>';
 		}
 
+		$extended = "|(\{)[a-zA-Z0-9\_\.]+(\})";
+
 		// Match all variable references
 		$variables = array();
-		preg_match_all("#$regex_before([a-zA-Z][a-zA-Z0-9\_\.]+)$regex_after#", $content, $variables);
-		
+		preg_match_all("#$regex_before([a-zA-Z]([a-zA-Z0-9\_\.]+$extended)+)$regex_after#", $content, $variables);
+
+		// Hackjob for nested variables
+		// Look at each variable; if it is nested in another variable, process nesting first
+		foreach ($variables[2] as $var_num => $var_ref)
+		{
+			foreach ($variables[2] as $var_num2 => $var_ref2)
+			{
+				//print "$var_ref -- $var_ref2<br />\n";
+				if ($var_num != $var_num2 && strpos($var_ref2, '{'.$var_ref.'}') !== false && isset($variables[0][$var_num]))
+				{
+					$variables[0][] = $variables[0][$var_num];
+					$variables[1][] = $variables[1][$var_num];
+					$variables[2][] = $variables[2][$var_num];
+					unset($variables[0][$var_num]);
+					unset($variables[1][$var_num]);
+					unset($variables[2][$var_num]);
+				}
+			}
+		}
+		//print_r($variables);
+			
 		foreach ($variables[2] as $var_num => $var_ref)
 		{
 			// Don't parse inline variables if they have quotes before them
-			if ($inline && ($variables[1][$var_num] == '\'' || $variables[1][$var_num] == '"'))
+			if ($in_inline && ($variables[1][$var_num] == '\'' || $variables[1][$var_num] == '"'))
 			{
 				continue;
+			}
+
+			if (strpos($var_ref, '{') !== false)
+			{
+				//print $var_ref . "\n<br />";
+				$var_ref = $this->parse_tpl_variables($var_ref, false, true, $tpl_reference);
+				//print $var_ref . "\n<br />";
 			}
 			
 			// Look if we are looping any variables. We will parse out everything
 			// until the last variable reference. Example:
 			// 'DOWNLOADS.file.type' is parsed into 'DOWNLOADS.file' and 'type'.
-			$parsed_var_ref = '$this->tpl_vars';
+			// TODO: make this work for nested variables: {f_something_{var}_else}
+			$parsed_var_ref = '$'.$tpl_reference.'->tpl_vars';
 			if (preg_match('#^([a-zA-Z0-9\_\.]+)\.([a-zA-Z0-9\_]+)$#si', $var_ref, $chunks))
 			{
 				if (isset($this->loops[$chunks[1]]))
@@ -571,8 +701,17 @@ class CortexTemplate
 			$parsed_var_ref .= "['" . $chunks[2] . "']";
 
 			// Complete variable reference and replace original reference with the new one
-			$parsed_var_ref = $php_before.'(isset('.$parsed_var_ref.') ? ' . $parsed_var_ref . ' : "' . ($inline ? false : $var_ref) . '")'.$php_after;
-			$content = str_replace($variables[0][$var_num], $parsed_var_ref, $content);
+			$parsed_var_ref = $php_before.'(isset('.$parsed_var_ref.') ? ' . $parsed_var_ref . ' : \'' . ($out_inline ? false : $var_ref) . '\')'.$php_after;
+			$count = 0;
+			$content = str_replace($variables[0][$var_num], $parsed_var_ref, $content, $count);
+			//$content = preg_replace('#'.preg_quote($variables[0][$var_num]).'#si', $parsed_var_ref, $content, -1, $count);
+
+			/*if (function_exists('show_error') && $count == 0)
+			{
+				//show_error('Template Error: no replacements made for '.$variables[0][$var_num].' =&gt;'.$parsed_var_ref);
+				print('Template Error: no replacements made for '.$variables[0][$var_num].' =&gt;'.$parsed_var_ref)."\n<br/>";
+				print htmlspecialchars($content)."\n<br /><br />\n\n";
+			}*/
 		}
 		
 		// Return parsed content
@@ -595,7 +734,7 @@ class CortexTemplate
 		$conditions = preg_replace($find, $replace, $conditions);
 		
 		// Change variable references in original condition to PHP equivalents
-		$conditions = $this->parse_tpl_variables($conditions, true);
+		$tpl_reference = ($this->compiler_inside_define ? 'tpl_in' : 'this');
 		
 		return $conditions;
 	}
